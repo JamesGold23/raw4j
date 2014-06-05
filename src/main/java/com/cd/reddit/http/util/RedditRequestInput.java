@@ -14,48 +14,48 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 package com.cd.reddit.http.util;
 
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.http.NameValuePair;
 
 public class RedditRequestInput {
 
 	private final List<String> pathSegments;
-	private final Map<String, String> queryParams;
-	private final Map<String, String> formParams;
+	private final List<NameValuePair> queryParams;
+	private final List<NameValuePair> bodyParams;
 	private int hashCode;
 	
 	public RedditRequestInput(List<String> thePathSegments){
 		pathSegments = thePathSegments;
 		queryParams = null;
-		formParams = null;
+		bodyParams = null;
 	}
 	
 	public RedditRequestInput(List<String> thePathSegments,
-							  Map<String, String> theQueryParams){
+							  List<NameValuePair> theQueryParams){
 		pathSegments = thePathSegments;
 		queryParams = theQueryParams;
-		formParams = null;		
+		bodyParams = null;		
 	}
 
 	public RedditRequestInput(List<String> thePathSegments,
-							  Map<String, String> theQueryParams,
-							  Map<String, String> theBodyParams){
+							  List<NameValuePair> theQueryParams,
+							  List<NameValuePair> theBodyParams){
 		pathSegments = thePathSegments;
 		queryParams = theQueryParams;
-		formParams = theBodyParams;				
+		bodyParams = theBodyParams;				
 	}
 
 	public List<String> getPathSegments() {
 		return pathSegments;
 	}
 
-	public Map<String, String> getQueryParams() {
+	public List<NameValuePair> getQueryParams() {
 		return queryParams;
 	}
 
-	public Map<String, String> getFormParams() {
-		return formParams;
+	public List<NameValuePair> getBodyParams() {
+		return bodyParams;
 	}
 
 	@Override
@@ -75,19 +75,19 @@ public class RedditRequestInput {
 		builder.append(nl);
 		
 		if(queryParams != null){
-			for(Map.Entry<String, String> entry : queryParams.entrySet()){
-				builder.append(entry.getKey() + " = " + entry.getValue());
+			for(NameValuePair pair : queryParams){
+				builder.append(pair.getName() + " = " + pair.getValue());
 				builder.append(nl);			
 			}		
 			builder.append(nl);
 		}
 		
-		builder.append("--- FORM PARAMS ---");		
+		builder.append("--- BODY PARAMS ---");		
 		builder.append(nl);
 		
-		if(formParams != null){
-			for(Map.Entry<String, String> entry : formParams.entrySet()){
-				builder.append(entry.getKey() + " = " + entry.getValue());
+		if(bodyParams != null){
+			for(NameValuePair pair : bodyParams){
+				builder.append(pair.getName() + " = " + pair.getValue());
 				builder.append(nl);			
 			}		
 			builder.append(nl);

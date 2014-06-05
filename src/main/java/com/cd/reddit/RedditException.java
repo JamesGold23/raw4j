@@ -13,12 +13,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 
 package com.cd.reddit;
 
+import java.io.IOException;
+
 /**
  * Does this class need anything else? Could exception handling be better?
  * 
  * @author <a href="https://github.com/corydissinger">Cory Dissinger</a>
  */
-public class RedditException extends Exception{
+public class RedditException extends IOException{
 	private static final long serialVersionUID = 6159115388677496357L;
 
 	public RedditException(String message) {

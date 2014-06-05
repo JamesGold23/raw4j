@@ -13,18 +13,29 @@
 package com.cd.reddit.http;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.*;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-
 import com.cd.reddit.RedditException;
 import com.cd.reddit.http.util.RedditRequestInput;
 import com.cd.reddit.http.util.RedditRequestResponse;
 
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.Consts;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 
 /**
  * Necessary implementation of HttpURLConnection and friends.
@@ -46,124 +57,7 @@ public class RedditRequestor {
 
     public RedditRequestor(String userAgent) {
         this.userAgent = userAgent;
-    }
-    
-    private HttpURLConnection getConnection(RedditRequestInput input) throws RedditException {
-        try {
-            HttpURLConnection connection = (HttpURLConnection) generateURL(input.getPathSegments(), input.getQueryParams())
-                    .openConnection();
-            
-            connection.setRequestProperty("User-Agent", userAgent);
-            
-            if(session != null)
-            	connection.setRequestProperty("Cookie", "reddit_session=" + session);
-
-            if(modhash != null)
-                connection.setRequestProperty("X-Modhash", modhash);
-            
-            return connection;
-        } catch (Exception e) {
-            throw new RedditException(e);
-        }
-    }
-
-    public RedditRequestResponse executeGet(RedditRequestInput input) throws RedditException {
-        return readResponse(getConnection(input), input);
-    }
-
-    public RedditRequestResponse executePost(RedditRequestInput input) throws RedditException {
-        HttpURLConnection connection = getConnection(input);
-        
-        connection.setDoOutput(true);
-        
-        try {
-			connection.setRequestMethod("POST");
-		} catch (ProtocolException e) {
-			throw new RedditException(e);
-		}
-
-        OutputStream outputStream = null;
-        
-        try {
-            outputStream = connection.getOutputStream();
-            IOUtils.write(generateUrlEncodedForm(input.getFormParams()), outputStream, "UTF-8");
-        } catch (IOException e) {
-            throw new RedditException(e);
-        } finally {
-            IOUtils.closeQuietly(outputStream);
-        }
-
-        return readResponse(connection, input);
-    }
-
-    private RedditRequestResponse readResponse(HttpURLConnection connection, RedditRequestInput input) throws RedditException {
-        InputStream stream = null;
-
-        try {
-            // Connection will be made here
-            stream = connection.getInputStream();
-
-            // Buffers internally
-            String responseBody = IOUtils.toString(stream, "UTF-8");
-            int statusCode = connection.getResponseCode();
-
-            if (statusCode != HttpURLConnection.HTTP_OK) {
-                throw new RedditException(generateErrorString(statusCode, input, responseBody));
-            }
-
-            return new RedditRequestResponse(statusCode, responseBody);
-
-        } catch (IOException e1) {
-            throw new RedditException(e1);
-        } finally {
-            // Internally checks for null
-            IOUtils.closeQuietly(stream);
-        }
-    }
-
-    private String generateUrlEncodedForm(Map<String, String> formParams) {
-        QueryBuilder builder = new QueryBuilder();
-
-        for (Map.Entry<String, String> entry : formParams.entrySet()) {
-            builder.addParameter(entry.getKey(), entry.getValue());
-        }
-
-        return builder.build();
-    }
-
-    private URL generateURL(List<String> pathSegments,
-            Map<String, String> queryParams) throws MalformedURLException {
-
-        String path = "";
-        String query = "";
-
-        if (pathSegments != null) {
-            StringBuilder pathBuilder = new StringBuilder("/");
-            Iterator<String> itr = pathSegments.iterator();
-
-            while (itr.hasNext()) {
-                pathBuilder.append(itr.next());
-
-                if (itr.hasNext()) {
-                    pathBuilder.append("/");
-                }
-            }
-
-            path = pathBuilder.toString();
-        }
-
-        if (queryParams != null) {
-            QueryBuilder builder = new QueryBuilder();
-
-            for (Map.Entry<String, String> entry : queryParams.entrySet()) {
-                builder.addParameter(entry.getKey(), entry.getValue());
-            }
-
-            query = "?" + builder.build();
-		}
-		
-		return new URL("http", HOST, path+query);
-	}
+    }    
 
 	public void setModhashHeader(String modhash) {
 		this.modhash = modhash;
@@ -173,6 +67,94 @@ public class RedditRequestor {
         this.session = session;
     }
 
+    public RedditRequestResponse executeGet(RedditRequestInput input) throws RedditException {
+    	HttpRequestBase httpget = new HttpGet(generateURI(input.getPathSegments(), input.getQueryParams()));
+    	return executeRequest(httpget, input);
+    }
+
+    public RedditRequestResponse executePost(final RedditRequestInput input) throws RedditException {    	 	
+    	HttpRequestBase httppost = new HttpPost(generateURI(input.getPathSegments(), input.getQueryParams()));
+    	return executeRequest(httppost, input);
+    	
+    }
+    
+    private RedditRequestResponse executeRequest(HttpRequestBase request, final RedditRequestInput input) throws RedditException {
+    	CloseableHttpClient httpclient = HttpClients.createDefault();  
+    	
+    	// set the headers:    	
+    	request.setHeader(HttpHeaders.USER_AGENT, userAgent);    	
+        if(session != null)
+        	request.setHeader("Cookie", "reddit_session=" + session);
+        if(modhash != null)
+            request.setHeader("X-Modhash", modhash);
+    	
+        // set the body params if this request is a POST:        
+        if (request.getMethod() == "POST") {
+        	UrlEncodedFormEntity body = new UrlEncodedFormEntity(input.getBodyParams(), Consts.UTF_8);    	
+        	((HttpPost) request).setEntity(body);
+        }
+    	    	
+    	// handle responses:    	
+    	ResponseHandler<RedditRequestResponse> rh = new ResponseHandler<RedditRequestResponse>() {
+    		@Override
+    		public RedditRequestResponse handleResponse(
+    	            final HttpResponse response) throws IOException {
+    			int statusCode = response.getStatusLine().getStatusCode();
+    	        HttpEntity entity = response.getEntity();    	        
+        		if (entity == null) {
+    	            throw new ClientProtocolException("Response contains no content");
+    	        }
+        		String responseBody = EntityUtils.toString(entity);
+    	        if (statusCode != HttpStatus.SC_OK) {
+    	        	throw new RedditException(generateErrorString(statusCode, input, responseBody));
+    	        }    	        
+    	        return new RedditRequestResponse(statusCode, responseBody);
+    	    }
+    	};
+    	
+    	// execute request
+    	RedditRequestResponse rrr = null;
+    	try {
+    		if (request.getMethod().equals("POST")) {
+    			rrr = httpclient.execute((HttpPost) request, rh);
+    		} else {
+    			rrr = httpclient.execute((HttpGet) request, rh);
+    		}
+    	} catch (IOException e ) {
+    		throw new RedditException(e.getMessage());
+    	}
+    	
+    	return rrr;
+    }
+
+    private URI generateURI(List<String> pathSegments, List<NameValuePair> queryParams) throws RedditException {
+    	String path = "";
+    	if (pathSegments != null) {
+    		path += "/" + StringUtils.join(pathSegments, "/");
+    	}
+    	
+    	// NOTE: URIBuilder encodes the URL automatically
+    	URIBuilder ub = new URIBuilder();
+    	ub.setScheme("http").setHost(HOST);
+    	
+    	if (pathSegments != null) {
+    		ub.setPath(path);
+    	}
+    	
+    	if (queryParams != null) {
+    		ub.setParameters(queryParams);
+    	}
+    	
+    	URI uri = null;
+    	try {
+    		uri = ub.build();
+    	} catch (URISyntaxException e) {
+    		throw new RedditException(e.getMessage());
+    	}
+    	
+    	return uri;
+    }
+        	
     private String generateErrorString(final int statusCode,
             						   final RedditRequestInput input,
             						   final String responseBody) {

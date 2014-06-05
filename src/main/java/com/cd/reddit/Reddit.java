@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
 
 import com.cd.reddit.http.RedditRequestor;
 import com.cd.reddit.http.util.RedditApiParameterConstants;
@@ -81,16 +83,16 @@ public class Reddit {
      */
 	public RedditJsonMessage login(final String userName, final String password) throws RedditException{
 		final List<String> path = new ArrayList<String>(2);
-		final Map<String, String> form = new HashMap<String, String>(2);
+		List<NameValuePair> bodyParams = new ArrayList<NameValuePair>(3);
 		
 		path.add(RedditApiResourceConstants.API);
 		path.add(RedditApiResourceConstants.LOGIN);
-
-		form.put(RedditApiParameterConstants.API_TYPE, RedditApiParameterConstants.JSON);		
-		form.put(RedditApiParameterConstants.USER, userName);
-		form.put(RedditApiParameterConstants.PASSWD, password);
 		
-		final RedditRequestInput requestInput = new RedditRequestInput(path, null, form);
+		bodyParams.add(new BasicNameValuePair(RedditApiParameterConstants.API_TYPE, RedditApiParameterConstants.JSON));
+		bodyParams.add(new BasicNameValuePair(RedditApiParameterConstants.USER, userName));
+		bodyParams.add(new BasicNameValuePair(RedditApiParameterConstants.PASSWD, password));		
+		
+		final RedditRequestInput requestInput = new RedditRequestInput(path, null, bodyParams);
 		final RedditRequestResponse response = requestor.executePost(requestInput);
 		
 		final RedditJsonParser parser = new RedditJsonParser(response.getBody());
@@ -108,14 +110,14 @@ public class Reddit {
 
     public RedditJsonMessage newCaptcha() throws RedditException {
         final List<String> path = new ArrayList<String>(2);
-        final Map<String, String> form = new HashMap<String, String>(1);
+        final List<NameValuePair> bodyParams = new ArrayList<NameValuePair>(1);
 
         path.add(RedditApiResourceConstants.API);
         path.add(RedditApiResourceConstants.NEW_CAPTCHA);
 
-        form.put(RedditApiParameterConstants.API_TYPE, RedditApiParameterConstants.JSON);
+        bodyParams.add(new BasicNameValuePair(RedditApiParameterConstants.API_TYPE, RedditApiParameterConstants.JSON));
 
-        final RedditRequestInput requestInput = new RedditRequestInput(path, null, form);
+        final RedditRequestInput requestInput = new RedditRequestInput(path, null, bodyParams);
         final RedditRequestResponse response = requestor.executePost(requestInput);
 
         final RedditJsonParser parser = new RedditJsonParser(response.getBody());
@@ -180,7 +182,7 @@ public class Reddit {
 	//TODO: The can of worms begins here. Check example-morechildren.json to see what I mean.
 	public List<RedditComment> moreChildrenFor(RedditComments theComments, String desiredSort) throws RedditException{
 		final List<String> pathSegments = new ArrayList<String>(2);
-		final Map<String, String> form = new HashMap<String, String>(2);
+		final List<NameValuePair> bodyParams = new ArrayList<NameValuePair>(3);
 		
 		pathSegments.add(RedditApiResourceConstants.API);
 		pathSegments.add(RedditApiResourceConstants.MORECHILDREN);
@@ -188,11 +190,11 @@ public class Reddit {
 		final List<String> childrenList = theComments.getMore().getChildren();
 		final String linkId 			= theComments.getParentLink().getName();
 		
-		form.put(RedditApiParameterConstants.API_TYPE, RedditApiParameterConstants.JSON);		
-		form.put(RedditApiParameterConstants.CHILDREN, StringUtils.join(childrenList.iterator(), ","));
-		form.put(RedditApiParameterConstants.LINK_ID, linkId);
+		bodyParams.add(new BasicNameValuePair(RedditApiParameterConstants.API_TYPE, RedditApiParameterConstants.JSON));		
+		bodyParams.add(new BasicNameValuePair(RedditApiParameterConstants.CHILDREN, StringUtils.join(childrenList.iterator(), ",")));
+		bodyParams.add(new BasicNameValuePair(RedditApiParameterConstants.LINK_ID, linkId));
 
-		final RedditRequestInput requestInput = new RedditRequestInput(pathSegments, null, form);
+		final RedditRequestInput requestInput = new RedditRequestInput(pathSegments, null, bodyParams);
 		
 		final RedditRequestResponse response = requestor.executePost(requestInput);
 		
@@ -223,12 +225,12 @@ public class Reddit {
 	//TODO: Is this always a Link?
 	public List<RedditLink> infoForId(final String id) throws RedditException{
 		final List<String> pathSegments = new ArrayList<String>(2);
-		final Map<String, String> queryParams = new HashMap<String, String>(1);
+		final List<NameValuePair> queryParams = new ArrayList<NameValuePair>(1);
 		
 		pathSegments.add(RedditApiResourceConstants.API);
 		pathSegments.add(RedditApiResourceConstants.INFO + RedditApiResourceConstants.DOT_JSON);		
 		
-		queryParams.put(RedditApiParameterConstants.ID, id);
+		queryParams.add(new BasicNameValuePair(RedditApiParameterConstants.ID, id));
 		
 		final RedditRequestInput requestInput 
 			= new RedditRequestInput(pathSegments, queryParams);
@@ -242,16 +244,16 @@ public class Reddit {
 	
 	public RedditJsonMessage comment(String rawMarkdown, String parentId) throws RedditException{
 		final List<String> pathSegments = new ArrayList<String>(2);
-		final Map<String, String> form = new HashMap<String, String>(3);
+		final List<NameValuePair> bodyParams = new ArrayList<NameValuePair>(3);
 		
 		pathSegments.add(RedditApiResourceConstants.API);
 		pathSegments.add(RedditApiResourceConstants.COMMENT);
 
-		form.put(RedditApiParameterConstants.API_TYPE, RedditApiParameterConstants.JSON);		
-		form.put(RedditApiParameterConstants.TEXT, rawMarkdown);
-		form.put(RedditApiParameterConstants.THING_ID, parentId);
+		bodyParams.add(new BasicNameValuePair(RedditApiParameterConstants.API_TYPE, RedditApiParameterConstants.JSON));		
+		bodyParams.add(new BasicNameValuePair(RedditApiParameterConstants.TEXT, rawMarkdown));
+		bodyParams.add(new BasicNameValuePair(RedditApiParameterConstants.THING_ID, parentId));
 
-		final RedditRequestInput requestInput = new RedditRequestInput(pathSegments, null, form);
+		final RedditRequestInput requestInput = new RedditRequestInput(pathSegments, null, bodyParams);
 		
 		final RedditRequestResponse response = requestor.executePost(requestInput);
 		
@@ -262,15 +264,15 @@ public class Reddit {
 
 	public void delete(String fullname) throws RedditException{
 		final List<String> pathSegments = new ArrayList<String>(2);
-		final Map<String, String> form = new HashMap<String, String>(2);
+		final List<NameValuePair> bodyParams = new ArrayList<NameValuePair>(2);
 		
 		pathSegments.add(RedditApiResourceConstants.API);
 		pathSegments.add(RedditApiResourceConstants.DEL);
 
-		form.put(RedditApiParameterConstants.API_TYPE, RedditApiParameterConstants.JSON);		
-		form.put(RedditApiParameterConstants.ID, fullname);
+		bodyParams.add(new BasicNameValuePair(RedditApiParameterConstants.API_TYPE, RedditApiParameterConstants.JSON));		
+		bodyParams.add(new BasicNameValuePair(RedditApiParameterConstants.ID, fullname));
 
-		final RedditRequestInput requestInput = new RedditRequestInput(pathSegments, null, form);
+		final RedditRequestInput requestInput = new RedditRequestInput(pathSegments, null, bodyParams);
 		
 		final RedditRequestResponse response = requestor.executePost(requestInput);
 	}
@@ -293,15 +295,15 @@ public class Reddit {
 
     public void vote(int voteDirection, String fullname) throws RedditException{
         final List<String> pathSegments = new ArrayList<String>(2);
-        final Map<String, String> form = new HashMap<String, String>(2);
+        final List<NameValuePair> bodyParams = new ArrayList<NameValuePair>(2);
 
         pathSegments.add(RedditApiResourceConstants.API);
         pathSegments.add(RedditApiResourceConstants.VOTE);
 
-        form.put(RedditApiParameterConstants.VOTE_DIRECTION, Integer.toString(voteDirection));
-        form.put(RedditApiParameterConstants.ID, fullname);
+        bodyParams.add(new BasicNameValuePair(RedditApiParameterConstants.VOTE_DIRECTION, Integer.toString(voteDirection)));
+        bodyParams.add(new BasicNameValuePair(RedditApiParameterConstants.ID, fullname));
 
-        final RedditRequestInput requestInput = new RedditRequestInput(pathSegments, null, form);
+        final RedditRequestInput requestInput = new RedditRequestInput(pathSegments, null, bodyParams);
         final RedditRequestResponse response = requestor.executePost(requestInput);
 
         final RedditJsonParser parser = new RedditJsonParser(response.getBody());
@@ -314,15 +316,14 @@ public class Reddit {
 
     public int markNSFW(String linkId) throws RedditException {
         final List<String> pathSegments = new ArrayList<String>(2);
+        final List<NameValuePair> bodyParams = new ArrayList<NameValuePair>(1);
 
         pathSegments.add(RedditApiResourceConstants.API);
         pathSegments.add(RedditApiResourceConstants.MARKNSFW);
 
-        final Map<String, String> formParams = new HashMap<String, String>(1);
+        bodyParams.add(new BasicNameValuePair(RedditApiParameterConstants.ID, linkId));
 
-        formParams.put(RedditApiParameterConstants.ID, linkId);
-
-        final RedditRequestInput requestInput = new RedditRequestInput(pathSegments, null, formParams);
+        final RedditRequestInput requestInput = new RedditRequestInput(pathSegments, null, bodyParams);
 
         final RedditRequestResponse response = requestor.executePost(requestInput);
 
@@ -331,15 +332,14 @@ public class Reddit {
 
     public int unmarkNSFW(String linkId) throws RedditException {
         final List<String> pathSegments = new ArrayList<String>(2);
+        final List<NameValuePair> bodyParams = new ArrayList<NameValuePair>(1);
 
         pathSegments.add(RedditApiResourceConstants.API);
         pathSegments.add(RedditApiResourceConstants.UNMARKNSFW);
 
-        final Map<String, String> formParams = new HashMap<String, String>(1);
+        bodyParams.add(new BasicNameValuePair(RedditApiParameterConstants.ID, linkId));
 
-        formParams.put(RedditApiParameterConstants.ID, linkId);
-
-        final RedditRequestInput requestInput = new RedditRequestInput(pathSegments, null, formParams);
+        final RedditRequestInput requestInput = new RedditRequestInput(pathSegments, null, bodyParams);
 
         final RedditRequestResponse response = requestor.executePost(requestInput);
 

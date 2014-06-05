@@ -16,10 +16,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -44,12 +43,13 @@ public class RedditRequestInputTest {
 		System.out.println(nl);		
 		
 		List<String> testSegments1 = createTestSegments1();
-		Map<String, String> queryParams = createTestQueryParams1();
-		Map<String, String> formParams = createTestFormParams1();
+		List<NameValuePair> queryParams = createTestQueryParams1();
+		List<NameValuePair> formParams = createTestFormParams1();
 		obj1 = new RedditRequestInput(testSegments1, queryParams, formParams);
 		
 		System.out.println(obj1);		
 	}
+	
 	
 	@Test
 	public void testHashCodeTrue(){
@@ -57,13 +57,13 @@ public class RedditRequestInputTest {
 		System.out.println(nl);		
 		
 		List<String> testSegments1 = createTestSegments1();
-		Map<String, String> queryParams = createTestQueryParams1();
-		Map<String, String> formParams = createTestFormParams1();
+		List<NameValuePair> queryParams = createTestQueryParams1();
+		List<NameValuePair> formParams = createTestFormParams1();
 		obj1 = new RedditRequestInput(testSegments1, queryParams, formParams);
 		
 		List<String> testSegments2 = createTestSegments1();
-		Map<String, String> queryParams2 = createTestQueryParams1();
-		Map<String, String> formParams2 = createTestFormParams1();
+		List<NameValuePair> queryParams2 = createTestQueryParams1();
+		List<NameValuePair> formParams2 = createTestFormParams1();
 		obj2 = new RedditRequestInput(testSegments2, queryParams2, formParams2);
 		
 		assertEquals(obj1.hashCode(), obj2.hashCode());
@@ -75,13 +75,13 @@ public class RedditRequestInputTest {
 		System.out.println(nl);		
 		
 		List<String> testSegments1 = createTestSegments1();
-		Map<String, String> queryParams = createTestQueryParams1();
-		Map<String, String> formParams = createTestFormParams1();
+		List<NameValuePair> queryParams = createTestQueryParams1();
+		List<NameValuePair> formParams = createTestFormParams1();
 		obj1 = new RedditRequestInput(testSegments1, queryParams, formParams);
 		
 		List<String> testSegments2 = createTestSegments2();
-		Map<String, String> queryParams2 = createTestQueryParams2();
-		Map<String, String> formParams2 = createTestFormParams2();
+		List<NameValuePair> queryParams2 = createTestQueryParams2();
+		List<NameValuePair> formParams2 = createTestFormParams2();
 		obj2 = new RedditRequestInput(testSegments2, queryParams2, formParams2);
 		
 		assertNotSame(obj1.hashCode(), obj2.hashCode());
@@ -101,31 +101,31 @@ public class RedditRequestInputTest {
 		return testSegments2;
 	}
 	
-	private Map<String, String> createTestQueryParams1() {
-		Map<String, String> testFormParams1 = new HashMap<String, String>(); 
-		testFormParams1.put("MYTEST", "MYTEST2");
-		testFormParams1.put("MYTEST2", "MYTEST3");
-		return testFormParams1;
+	private List<NameValuePair> createTestQueryParams1() {
+		List<NameValuePair> testQueryParams1 = new ArrayList<NameValuePair>(); 
+		testQueryParams1.add(new BasicNameValuePair("MYTEST", "MYTEST2"));
+		testQueryParams1.add(new BasicNameValuePair("MYTEST2", "MYTEST3"));
+		return testQueryParams1;
 	}	
 
-	private Map<String, String> createTestQueryParams2() {
-		Map<String, String> testQueryParams2 = new HashMap<String, String>(); 
-		testQueryParams2.put("MYTEST5", "MYTEST6");
-		testQueryParams2.put("MYTEST7", "MYTEST8");
+	private List<NameValuePair> createTestQueryParams2() {
+		List<NameValuePair> testQueryParams2 = new ArrayList<NameValuePair>(); 
+		testQueryParams2.add(new BasicNameValuePair("MYTEST5", "MYTEST6"));
+		testQueryParams2.add(new BasicNameValuePair("MYTEST7", "MYTEST8"));
 		return testQueryParams2;
 	}
 	
-	private Map<String, String> createTestFormParams1() {
-		Map<String, String> testFormParams1 = new HashMap<String, String>(); 
-		testFormParams1.put("TEST", "TEST2");
-		testFormParams1.put("TEST2", "TEST3");
+	private List<NameValuePair> createTestFormParams1() {
+		List<NameValuePair> testFormParams1 = new ArrayList<NameValuePair>(); 
+		testFormParams1.add(new BasicNameValuePair("MYTEST", "MYTEST2"));
+		testFormParams1.add(new BasicNameValuePair("MYTEST2", "MYTEST3"));
 		return testFormParams1;
 	}	
 
-	private Map<String, String> createTestFormParams2() {
-		Map<String, String> testFormParams2 = new HashMap<String, String>(); 
-		testFormParams2.put("TEST5", "TEST6");
-		testFormParams2.put("TEST7", "TEST8");
+	private List<NameValuePair> createTestFormParams2() {
+		List<NameValuePair> testFormParams2 = new ArrayList<NameValuePair>(); 
+		testFormParams2.add(new BasicNameValuePair("MYTEST5", "MYTEST6"));
+		testFormParams2.add(new BasicNameValuePair("MYTEST7", "MYTEST8"));
 		return testFormParams2;
 	}	
 }

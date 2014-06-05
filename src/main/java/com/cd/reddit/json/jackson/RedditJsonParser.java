@@ -247,9 +247,9 @@ public class RedditJsonParser {
 			
 		} catch (JsonParseException e) {
 			throw new RedditException(e);
-		} catch (IOException e) {
+		} catch (RedditException e) {
 			throw new RedditException(e);
-		} catch (RedditException e)		 {
+		} catch (IOException e)		 {
 			throw new RedditException(e);
 		}
 	}	
